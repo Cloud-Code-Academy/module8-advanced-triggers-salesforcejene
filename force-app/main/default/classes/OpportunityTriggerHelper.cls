@@ -97,7 +97,9 @@ public with sharing class OpportunityTriggerHelper {
         //generate email per owner by storing the owner's email
         for (Id ownerId : ownerToOppNames.keySet()){
             String email = ownerEmailMap.get(ownerId);
-            If (email == null) continue;
+            If (email == null) {
+                continue;
+            }
 
             String body = 'The following opportunities were deleted: \n' + String.join(ownerToOppNames.get(ownerId), email);
 
