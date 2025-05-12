@@ -60,6 +60,8 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void afterDelete() {
+        //print message
+        System.debug('Who ya gonna call??');
         OpportunityTriggerHelper.notifyOwnersOpportunityDeleted(oldOpps);
     }
 }
