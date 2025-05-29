@@ -21,7 +21,10 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
                 opp.addError('Opportunity amount must be greater than 5000');
             }
         }
+        OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
         OpportunityTriggerHelper.addPrimaryCEOContact(newOpps);
+        // OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
+
     }
 
     public override void beforeDelete() {
@@ -49,14 +52,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
 
     public override void afterUpdate(){
         // Append Stage changes in Opportunity Description
-        for (Opportunity opp : newOpps) {
-            Opportunity oldOpp = oldOppsMap.get(opp.Id);
-
-            if (opp.stageName  != null && opp.stageName != oldOpp.StageName) {
-                opp.Description = (opp.Description == null ? '' : opp.Description);
-                opp.Description += '\n Stage Change:' + opp.StageName + ':' + DateTime.now().format();
-            }
-        }            
+        System.debug('placeholder for now, just in case');
     }
 
     public override void afterDelete() {

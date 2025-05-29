@@ -1,5 +1,16 @@
 public with sharing class OpportunityTriggerHelper {
 
+    public static void appendStageChangeToDescription (List<Opportunity> newOpps, Map<Id,Opportunity> oldOppsMap) {
+        for (Opportunity opp : newOpps){
+            Opportunity oldOpp = oldOppsMap.get(opp.Id);
+
+            if (opp.StageName != null && opp.StageName != oldOpp.StageName){
+                opp.Description = (opp.Description == null ? '': opp.Description);
+                opp.Description += '\n Stage Change: ' + opp.StageName + ':' + Datetime.now().format();
+            }
+        }
+    }
+
     public static void addPrimaryCEOContact (List<Opportunity> newOpps){
         Set<Id> acctIds = New Set<Id>();
 
@@ -56,9 +67,10 @@ public with sharing class OpportunityTriggerHelper {
             );}
         Database.insert(oppsNeedingTasks, AccessLevel.USER_MODE);
     }
+    
 
     public static void notifyOwnersOpportunityDeleted (List <Opportunity> deletedOpps) {
-        //my list to store completed messages
+        //list to store completed messages
         List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
         
         //Gather unique OwnerIds
