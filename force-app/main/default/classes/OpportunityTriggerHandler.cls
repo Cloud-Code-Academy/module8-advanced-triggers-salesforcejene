@@ -1,6 +1,6 @@
 public with sharing class OpportunityTriggerHandler extends TriggerHandler{
 
-    //instantiate class variabes as references to the trigger contextw variables
+    //instantiate class variabes as references to the trigger context variables
     private List<Opportunity>   newOpps    = new List<Opportunity>();
     private List<Opportunity>   oldOpps    = new List<Opportunity>();
     private Map<Id,Opportunity> newOppsMap = new Map<Id,Opportunity>();
@@ -23,7 +23,6 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
         }
         OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
         OpportunityTriggerHelper.addPrimaryCEOContact(newOpps);
-        // OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
 
     }
 
