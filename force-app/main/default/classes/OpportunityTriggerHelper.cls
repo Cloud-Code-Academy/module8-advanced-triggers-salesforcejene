@@ -3,15 +3,18 @@ public with sharing class OpportunityTriggerHelper {
     public static void appendStageChangeToDescription (List<Opportunity> newOpps, Map<Id,Opportunity> oldOppsMap) {
         for (Opportunity opp : newOpps){
             Opportunity oldOpp = oldOppsMap.get(opp.Id);
-
+            //if there is data in stageName and there is a new value then; if description is null leave it null or display the Description
             if (opp.StageName != null && opp.StageName != oldOpp.StageName){
+                //Assign an empty string to Description prevent concatenation failure
                 opp.Description = (opp.Description == null ? '': opp.Description);
-                opp.Description += '\n Stage Change: ' + opp.StageName + ':' + Datetime.now().format();
-            }
+                opp.Description += '\n Stage Change: ' + opp.StageName + ': ' + Datetime.now().format();
+            }            
         }
     }
 
     public static void addPrimaryCEOContact (List<Opportunity> newOpps){
+        List<Contact> primaryContact = new List<Contact>();
+
         Set<Id> acctIds = New Set<Id>();
 
         for (Opportunity opp : newOpps) {
@@ -48,24 +51,38 @@ public with sharing class OpportunityTriggerHelper {
         
         for (Opportunity opp : existingOpps) { 
             if (opp.StageName   == 'Closed Won'){
-                String industry = accountsWithOppsMap.get(opp.AccountId).Industry;
-                if (industry    == 'Banking') {
-                    opp.addError('Cannot delete closed opportunity for a banking account that is won');
-                }
+                if(accountsWithOppsMap.containsKey(opp.AccountId)){
+                 String industry = accountsWithOppsMap.get(opp.AccountId).Industry;
+                    if (industry    == 'Banking') {
+                        opp.addError('Cannot delete closed opportunity for a banking account that is won');
+                    }   
+                }                
             }
         }
     }
 
     public static void buildNewTasksForOpps (List<Opportunity> oppsNeedingTasks) {
+        List<Task> tasksToInsert = new List<Task>();
+
         for(Opportunity opp : oppsNeedingTasks) {
-            
-            Task tsk = new Task (
-                Subject = 'Call Primary Contact',
-                WhatId = opp.Id,
-                OwnerId = opp.OwnerId,
+            //check whether Primary Contact is set
+            if (opp.Primary_Contact__c != null) {
+                Task tsk     = new Task (
+                Subject      = 'Call Primary Contact',
+                WhatId       = opp.Id,
+                WhoId        = opp.Primary_Contact__c,
+                OwnerId      = opp.OwnerId,
                 ActivityDate = Date.today().addDays(3)
-            );}
-        Database.insert(oppsNeedingTasks, AccessLevel.USER_MODE);
+            );
+            //add task to list. 
+            tasksToInsert.add(tsk);
+            }
+        }
+        if (!tasksToInsert.isEmpty()){
+            System.debug(LoggingLevel.INFO, 'Starting buildNewTasksForOps from After_INSERT');
+            Database.insert(tasksToInsert, AccessLevel.USER_MODE);
+            System.debug(LoggingLevel.INFO, 'Insert complete!');
+        }
     }
     
 
@@ -134,6 +151,8 @@ public with sharing class OpportunityTriggerHelper {
     }
 
     public static void assignPrimaryContact (Map<Id,Opportunity> undeletedOppsMap){
+        //verify logging level
+        System.debug(LoggingLevel.INFO, 'OppTriggerHelper:: assignPrimaryContact');
         //add set to store unique AccoutIds
         Set<Id> accountIds = new Set<Id>();
         for (Opportunity opp : undeletedOppsMap.values()){
@@ -143,7 +162,7 @@ public with sharing class OpportunityTriggerHelper {
         }
 
         //retrieve all VP Sales contacts for the relavant accounts
-        Map<Id, Contact> accountIdsWPrimaryContactMap = new Map<Id,Contact>();
+        Map<Id, Contact> accountIdsWithPrimaryContactMap = new Map<Id,Contact>();
 
         for (Contact con : [SELECT Id, AccountId 
                             FROM Contact
@@ -151,8 +170,8 @@ public with sharing class OpportunityTriggerHelper {
                             AND AccountId IN :accountIds
                             WITH USER_MODE]) {
             //Only take first contact 
-            if(!accountIdsWPrimaryContactMap.containsKey(con.AccountId)){
-                accountIdsWPrimaryContactMap.put(con.AccountId, con);
+            if(!accountIdsWithPrimaryContactMap.containsKey(con.AccountId)){
+                accountIdsWithPrimaryContactMap.put(con.AccountId, con);
             }
         }
 
@@ -160,12 +179,12 @@ public with sharing class OpportunityTriggerHelper {
         List<Opportunity> oppsToUpdate = new List<Opportunity>();
 
         for (Opportunity opp : undeletedOppsMap.values()) {
-            if(opp.Primary_Contact__c == null && accountIdsWPrimaryContactMap.containsKey(opp.AccountId)){
-                oppToUpdate.add (new Opportunity ( 
+            if(opp.Primary_Contact__c == null && accountIdsWithPrimaryContactMap.containsKey(opp.AccountId)){
+                oppsToUpdate.add (new Opportunity ( 
                     Id = opp.Id,
-                    Primary_Contact__c = accountIdsWPrimaryContactMap.get(opp.AccountId).Id
+                    Primary_Contact__c = accountIdsWithPrimaryContactMap.get(opp.AccountId).Id
                 ));
-                oppsToUpdate.add(oppToUpdate);
+                oppsToUpdate.add(opp);
             }            
         }
         Database.update(oppsToUpdate, AccessLevel.USER_MODE);

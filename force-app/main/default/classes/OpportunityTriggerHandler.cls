@@ -37,6 +37,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void beforeInsert(){
+        System.debug(LoggingLevel.INFO, 'OppTriggerHandler: Begin BEfoRe_INSERT');
         // Set default Type for new Opportunities
         for(Opportunity opp : this.newOpps) {
             if (opp.Type == null) {
@@ -46,12 +47,13 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void afterInsert(){
+        System.debug(LoggingLevel.INFO, 'OppTriggerHandler: Context AFTER_INSERT');
         OpportunityTriggerHelper.buildNewTasksForOpps(newOpps);
     }
 
     public override void afterUpdate(){
         // Append Stage changes in Opportunity Description
-        System.debug('placeholder for now, just in case');
+        System.debug('Oppty Code fired in the afterUpdate context.');
     }
 
     public override void afterDelete() {
