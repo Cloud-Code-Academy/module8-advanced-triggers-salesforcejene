@@ -352,8 +352,9 @@ public with sharing class TriggerBestPracticeTest {
             );
             oppsToInsert.add(opp);
         }
-
+        System.debug('Preparing to insert ' + oppsToInsert.size() + ' tasks');
         insert oppsToInsert;
+        System.debug(LoggingLevel.INFO, 'Task complete');
 
         List<Task> tasks = [SELECT Id, Subject, WhatId FROM Task WHERE WhatId IN :oppsToInsert];
         System.assertEquals(numberOfOpps, tasks.size(), 'Number of Tasks created is incorrect.');
