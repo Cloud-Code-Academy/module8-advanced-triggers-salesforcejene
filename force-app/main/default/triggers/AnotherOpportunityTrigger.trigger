@@ -36,18 +36,18 @@ trigger AnotherOpportunityTrigger on Opportunity (before insert, after insert, b
     //     }
     // }
 
-    // if (Trigger.isAfter){
-    //     if (Trigger.isInsert){
-    //         // Create a new Task for newly inserted Opportunities
-    //         // for (Opportunity opp : Trigger.new){
-    //         //     Task tsk = new Task();
-    //         //     tsk.Subject = 'Call Primary Contact';
-    //         //     tsk.WhatId = opp.Id;
-    //         //     tsk.WhoId = opp.Primary_Contact__c;
-    //         //     tsk.OwnerId = opp.OwnerId;
-    //         //     tsk.ActivityDate = Date.today().addDays(3);
-    //         //     insert tsk;
-    //         System.debug('Hi');
+    if (Trigger.isAfter){
+        if (Trigger.isInsert){
+            // Create a new Task for newly inserted Opportunities
+            // for (Opportunity opp : Trigger.new){
+            //     Task tsk = new Task();
+            //     tsk.Subject = 'Call Primary Contact';
+            //     tsk.WhatId = opp.Id;
+            //     tsk.WhoId = opp.Primary_Contact__c;
+            //     tsk.OwnerId = opp.OwnerId;
+            //     tsk.ActivityDate = Date.today().addDays(3);
+            //     insert tsk;
+            System.debug(LoggingLevel.INFO, 'AnotherOppTrigger::: isAfter_isInsert');
     //         // }
     //     } else if (Trigger.isUpdate){
     //         // Append Stage changes in Opportunity Description
@@ -110,5 +110,5 @@ trigger AnotherOpportunityTrigger on Opportunity (before insert, after insert, b
     //         }
     //     }
     //     update oppMap.values();
-    // }
+    }
 }
