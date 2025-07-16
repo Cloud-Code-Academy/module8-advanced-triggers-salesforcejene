@@ -7,28 +7,28 @@ public with sharing class OpportunityTriggerHelper {
             if (opp.StageName != null && opp.StageName != oldOpp.StageName){
                 //Assign an empty string to Description prevent concatenation failure
                 opp.Description = (opp.Description == null ? '': opp.Description);
-                opp.Description += '\n Stage Change: ' + opp.StageName + ': ' + Datetime.now().format();
+                opp.Description += '\n Stage Change:' + opp.StageName;
             }            
         }
     }
 
     public static void addPrimaryCEOContact (List<Opportunity> newOpps){
-        List<Contact> primaryContact = new List<Contact>();
-
-        Set<Id> acctIds = New Set<Id>();
+        Set<Id> acctIds = new Set<Id>();
 
         for (Opportunity opp : newOpps) {
-            acctIds.add(opp.AccountId); 
+            If(opp.AccountId != null){
+                acctIds.add(opp.AccountId); 
+            }            
         }
-        //find CEO contacts that will be stored as Primary Contact            
+        //find CEO contacts that will be stored as Primary Contact on the opp       
         Map <Id,Id> primaryContactMap = new Map <Id,Id>();
-
+        //query all CEO Contacts on the related Accounts
         for (Contact con : [SELECT Id, AccountId
                             FROM Contact
                             WHERE Title = 'CEO'
                             AND AccountId IN :acctIds
                             WITH USER_MODE]) {
-
+            //add records to map
             primaryContactMap.put(con.AccountId, con.Id);
         }
         //Populate the CEO contact from related Acct
@@ -46,7 +46,8 @@ public with sharing class OpportunityTriggerHelper {
             WHERE Id IN (
                 SELECT AccountId
                 FROM Opportunity
-                WHERE Id IN :existingOpps)
+                WHERE Id IN :existingOpps)            
+            WITH USER_MODE
         ]);
         
         for (Opportunity opp : existingOpps) { 
@@ -64,24 +65,20 @@ public with sharing class OpportunityTriggerHelper {
     public static void buildNewTasksForOpps (List<Opportunity> oppsNeedingTasks) {
         List<Task> tasksToInsert = new List<Task>();
 
-        for(Opportunity opp : oppsNeedingTasks) {
-            //check whether Primary Contact is set
-            if (opp.Primary_Contact__c != null) {
-                Task tsk     = new Task (
-                Subject      = 'Call Primary Contact',
-                WhatId       = opp.Id,
-                WhoId        = opp.Primary_Contact__c,
-                OwnerId      = opp.OwnerId,
-                ActivityDate = Date.today().addDays(3)
+        for(Opportunity opp : oppsNeedingTasks) {            
+            Task tsk     = new Task (
+            Subject      = 'Call Primary Contact',
+            WhatId       = opp.Id,
+            WhoId        = opp.Primary_Contact__c,
+            OwnerId      = opp.OwnerId,
+            ActivityDate = Date.today().addDays(3)
             );
             //add task to list. 
             tasksToInsert.add(tsk);
-            }
         }
+        
         if (!tasksToInsert.isEmpty()){
-            System.debug(LoggingLevel.INFO, 'Starting buildNewTasksForOps from After_INSERT');
             Database.insert(tasksToInsert, AccessLevel.USER_MODE);
-            System.debug(LoggingLevel.INFO, 'Insert complete!');
         }
     }
     
@@ -151,8 +148,6 @@ public with sharing class OpportunityTriggerHelper {
     }
 
     public static void assignPrimaryContact (Map<Id,Opportunity> undeletedOppsMap){
-        //verify logging level
-        System.debug(LoggingLevel.INFO, 'OppTriggerHelper:: assignPrimaryContact');
         //add set to store unique AccoutIds
         Set<Id> accountIds = new Set<Id>();
         for (Opportunity opp : undeletedOppsMap.values()){
