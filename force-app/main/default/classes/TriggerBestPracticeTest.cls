@@ -429,7 +429,8 @@ public with sharing class TriggerBestPracticeTest {
         Contact primaryContact = new Contact(
             FirstName = 'Primary',
             LastName = 'Contact',
-            AccountId = acc.Id
+            AccountId = acc.Id,
+            Title = 'CEO' /*JTF Added */
         );
 
         insert primaryContact;

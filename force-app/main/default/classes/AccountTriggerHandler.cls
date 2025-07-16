@@ -36,7 +36,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
 
             Contact con = new Contact(
 
-            LastName    = 'DefaultContact',
+            LastName    = 'Default Contact',
             Email       = 'default@email.com',
             AccountId   = newAcc.Id);
             //add record(s) to list
