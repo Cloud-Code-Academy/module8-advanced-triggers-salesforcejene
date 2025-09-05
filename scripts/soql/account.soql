@@ -3,4 +3,29 @@
 //     query text and running the command:
 //     SFDX: Execute SOQL Query with Currently Selected Text
 
-SELECT Id, Name FROM Account
+SELECT Id, AccountId, Name, FirstName, LastName, Title 
+            FROM Contact
+            WHERE Title = 'VP Sales'
+            AND AccountId = '001ak00000ofsHOAAY'
+            ORDER BY LastName DESC
+
+[SELECT Id, AccountId, FirstName, LastName, Account.Name
+    FROM Contact
+    WHERE Title = 'CEO'
+    AND AccountId != null
+    WITH USER_MODE]
+
+
+//Currently used in my addPrimaryCEOContact method in a for loop
+SELECT Id, Name, AccountId, Account.Name
+FROM Contact
+WHERE Title = 'CEO'
+AND AccountId = '003ak00000EOSkfAAH'
+
+//Warren is using
+SELECT Id, Name, Website,
+    (SELECT Id, AccountId
+    FROM Contacts
+    WHERE Title = 'CEO')
+FROM Account
+WHERE Id IN AccountId

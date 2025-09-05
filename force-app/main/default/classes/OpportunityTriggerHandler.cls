@@ -5,7 +5,9 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     private List<Opportunity>   oldOpps    = new List<Opportunity>();
     private Map<Id,Opportunity> newOppsMap = new Map<Id,Opportunity>();
     private Map<Id,Opportunity> oldOppsMap = new Map<Id,Opportunity>();
-
+    private Map<Id,Opportunity> restoredOppsMap = new Map<Id,Opportunity>();
+    // private context TriggerContext = this.context;
+    static Boolean hasFired = false;  //The flag is used to prevent recursion
 
     public OpportunityTriggerHandler(List<Opportunity> newOpps, List<Opportunity> oldOpps, Map<Id,Opportunity> newOppsMap, Map<Id,Opportunity> oldOppsMap) {
 
@@ -22,10 +24,8 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
             }
         }
         OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
-        OpportunityTriggerHelper.addPrimaryCEOContact(newOpps);
-
     }
-
+ 
     public override void beforeDelete() {
         // Prevent deletion of closed Opportunities
         for (Opportunity oldOpp : this.oldOpps) {
@@ -46,11 +46,39 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void afterInsert(){
+        if (hasFired) {
+            return;
+        }
+        hasFired = true;
+
+        System.debug('Trigger context was :+) ' + Trigger.operationType);
         OpportunityTriggerHelper.buildNewTasksForOpps(newOpps);
+        OpportunityTriggerHelper.addPrimaryCEOContactToOpportunities(newOpps);
+        hasFired = false;   //reset
+    }
+
+    public override void afterUpdate(){
+        if (hasFired){
+            return;
+        }
+        hasFired = true;        
+        System.debug('Trigger context was : ' + Trigger.operationType);
+        OpportunityTriggerHelper.addPrimaryCEOContactToOpportunities(newOpps);
+        hasFired = false;   //reset flag
     }
 
     public override void afterDelete() {
-        //print message
         OpportunityTriggerHelper.notifyOwnersOpportunityDeleted(oldOpps);
+    }
+    
+    public override void afterUndelete() {
+        if (hasFired) {
+            return;
+        }
+        hasFired = true;
+        if (Trigger.isAfter && Trigger.isUndelete){
+            OpportunityTriggerHelper.assignPrimaryContact(restoredOppsMap);
+        }
+        hasFired = false;   //flag reset 
     }
 }
