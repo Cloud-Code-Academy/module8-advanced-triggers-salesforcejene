@@ -41,8 +41,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
             AccountId   = newAcc.Id);
             //add record(s) to list
             conlist.add(con);
-        }
-        Database.insert(conList, AccessLevel.USER_MODE);
+        }        Database.insert(conList, AccessLevel.USER_MODE);
     }
 
     public void setShippingAddress() {
