@@ -16,18 +16,11 @@ public with sharing class OpportunityTriggerHelper {
         Set<Id> acctIds = new Set<Id>();
         List<Opportunity> oppsToUpdate = new List<Opportunity>();
 
-        System.debug('Event that triggered the addPrimaryCEOContact::-): ' + Trigger.operationType);
-        //System.debug('context: ' + this.context);
-
         for (Opportunity opp : opps){
             if (opp.AccountId != null) {
                 acctIds.add(opp.AccountId);
             }
         }
-
-        System.debug(LoggingLevel.FINEST, 'Total count of opps with related accounts (acctIds) are... ' + acctIds.size());
-        System.debug('Value of acctIds is: ' + acctIds);
-
         //find matching contacts related to the above accounts. These will be stored as Primary Contact on the opportunity 
         Map <Id,Account> primaryContactMap = new Map <Id,Account>([
             SELECT Id,
@@ -40,19 +33,12 @@ public with sharing class OpportunityTriggerHelper {
             WHERE Id IN :acctIds
             WITH USER_MODE
         ]);
-
-        System.debug(LoggingLevel.FINEST, 'Total count of primary Contacts are... ' + primaryContactMap.size());
-        System.debug('Values in primaryContactMap: ' + primaryContactMap);
-        /* final stretch time!! 
-        I need a reference to the Account and Contact records*/
         // //Populate the CEO contact from related Acct
         for (Opportunity opp : opps) {            
             if (opp.AccountId != null && primaryContactMap.containsKey(opp.AccountId)) {
 
                 Account acct = primaryContactMap.get(opp.AccountId);
                 List<Contact> newestMatchingContact = acct.Contacts; //point to subquery records
-
-                System.debug('Account: ' + acct.Id + ' -> Contact count: ' + (acct.Contacts == null ? 0 : acct.Contacts.size()));
 
                 if (newestMatchingContact != null && !newestMatchingContact.isEmpty()){
                     Contact match = newestMatchingContact[0];  //use the newest contact

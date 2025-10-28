@@ -5,7 +5,6 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     private List<Opportunity>   oldOpps    = new List<Opportunity>();
     private Map<Id,Opportunity> newOppsMap = new Map<Id,Opportunity>();
     private Map<Id,Opportunity> oldOppsMap = new Map<Id,Opportunity>();
-    private Map<Id,Opportunity> restoredOppsMap = new Map<Id,Opportunity>();
     // private context TriggerContext = this.context;
     static Boolean hasFired = false;  //The flag is used to prevent recursion
 
@@ -63,7 +62,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
         }
         hasFired = true;        
         System.debug('Trigger context was : ' + Trigger.operationType);
-        OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOpps, 'VP Sales');
+        OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOpps, 'CEO');
         hasFired = false;   //reset flag
     }
 
@@ -77,7 +76,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
         }
         hasFired = true;
         if (Trigger.isAfter && Trigger.isUndelete){
-            OpportunityTriggerHelper.addPrimaryContactToOpportunities(restoredOppsMap.values(), 'VP Sales');
+            OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOppsMap.values(), 'VP Sales');
         }
         hasFired = false;   //flag reset 
     }
