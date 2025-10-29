@@ -49,8 +49,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
             return;
         }
         hasFired = true;
-
-        System.debug('Trigger context was :+) ' + Trigger.operationType);
+        
         OpportunityTriggerHelper.buildNewTasksForOpps(newOpps);
         OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOpps, 'CEO');
         hasFired = false;   //reset
@@ -60,10 +59,9 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
         if (hasFired){
             return;
         }
-        hasFired = true;        
-        System.debug('Trigger context was : ' + Trigger.operationType);
+        hasFired = true;
         OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOpps, 'CEO');
-        hasFired = false;   //reset flag
+        hasFired = false;
     }
 
     public override void afterDelete() {
@@ -78,6 +76,6 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
         if (Trigger.isAfter && Trigger.isUndelete){
             OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOppsMap.values(), 'VP Sales');
         }
-        hasFired = false;   //flag reset 
+        hasFired = false;
     }
 }
