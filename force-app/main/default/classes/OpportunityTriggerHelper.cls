@@ -1,5 +1,14 @@
 public with sharing class OpportunityTriggerHelper {
 
+    public static void validateOppAmount(List<Opportunity> newOpps){
+        //moved simple logic out of handler
+        for (Opportunity newOpp : newOpps) {
+            if (newOpp.Amount < 5000) {
+                newOpp.addError(AMOUNT_TOO_LOW);
+            }
+        }
+    }
+
     public static void appendStageChangeToDescription (List<Opportunity> newOpps, Map<Id,Opportunity> oldOppsMap) {
         for (Opportunity opp : newOpps){
             Opportunity oldOpp = oldOppsMap.get(opp.Id);
@@ -57,6 +66,15 @@ public with sharing class OpportunityTriggerHelper {
             Database.update(oppsToUpdate, AccessLevel.USER_MODE);
         }    
     }
+        
+    public static void preventDeletionClosedOpp (List<Opportunity> oldOpps){
+        //moved simple logic out of handler
+        for (Opportunity oldOpp : oldOpps){
+            if (oldOpp.IsClosed){
+                oldOpp.addError('Cannot delete a closed opportunity');
+            }
+        }        
+    }
 
     public static void verifyClosedWonBankingOpps (List<Opportunity> existingOpps){
         Map<Id,Account> accountsWithOppsMap = new Map<Id,Account>([
@@ -69,14 +87,14 @@ public with sharing class OpportunityTriggerHelper {
             WITH USER_MODE
         ]);
         
-        for (Opportunity opp : existingOpps) { 
-            if (opp.StageName == 'Closed Won') {
-                if(accountsWithOppsMap.containsKey(opp.AccountId)){
-                String industry = accountsWithOppsMap.get(opp.AccountId).Industry;
+        for (Opportunity existingOpp : existingOpps) { 
+            if (existingOpp.StageName == 'Closed Won') {
+                if(accountsWithOppsMap.containsKey(existingOpp.AccountId)){
+                String industry = accountsWithOppsMap.get(existingOpp.AccountId).Industry;
                     if (industry == 'Banking') {
-                        opp.addError('Cannot delete closed opportunity for a banking account that is won');
+                        existingOpp.addError(CANNOT_DELETE_WON_BANKING_OPPS);
                     }   
-                }                
+                }
             }
         }
     }
@@ -145,16 +163,15 @@ public with sharing class OpportunityTriggerHelper {
             If (email == null) {
                 continue;
             }
-
-            String body = 'The following opportunities were deleted: \n' + String.join(ownerToOppNames.get(ownerId), email);
-
-            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-            mail.setToAddresses(new String[] {email});
-            mail.setSubject('Deleted Opportunities Alert!');
-            mail.setPlainTextBody(body);
-            mails.add(mail);
         }
-        
+        //build message contents outside of loop to prevent LimitException
+        String body = 'The following opportunities were deleted: \n' + String.join(ownerToOppNames.get(ownerId), email);
+
+        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+        mail.setToAddresses(new String[] {email});
+        mail.setSubject('Deleted Opportunities Alert!');
+        mail.setPlainTextBody(body);
+        mails.add(mail);
         //send emails----
         try {
             if(!mails.isEmpty()){
@@ -164,5 +181,5 @@ public with sharing class OpportunityTriggerHelper {
         } catch (Exception e){
             System.debug('Error sending emails: ' + e.getMessage());
         }
-    }     
+    }    
 }

@@ -17,21 +17,12 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void beforeUpdate() {
-        for (Opportunity opp : this.newOpps) {
-            if (opp.Amount < 5000) {
-                opp.addError('Opportunity amount must be greater than 5000');
-            }
-        }
+        OpportunityTriggerHelper.validateOppAmount(newOpps);
         OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
     }
  
     public override void beforeDelete() {
-        // Prevent deletion of closed Opportunities
-        for (Opportunity oldOpp : this.oldOpps) {
-            if (oldOpp.IsClosed) {
-                oldOpp.addError('Cannot delete closed opportunity');
-            }
-        }
+        
         OpportunityTriggerHelper.verifyClosedWonBankingOpps(oldOpps);
     }
 
