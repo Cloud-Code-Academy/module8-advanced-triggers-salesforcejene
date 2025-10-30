@@ -40,9 +40,9 @@ public with sharing class OpportunityTriggerHelper {
                 LIMIT 1)
             FROM Account
             WHERE Id IN :acctIds
-            WITH USER_MODE
-        ]);
-        // //Populate the CEO contact from related Acct
+            WITH USER_MODE]
+        );
+        //Populate the CEO contact from related Acct
         for (Opportunity opp : opps) {            
             if (opp.AccountId != null && primaryContactMap.containsKey(opp.AccountId)) {
 
@@ -55,7 +55,7 @@ public with sharing class OpportunityTriggerHelper {
                     If(opp.Primary_Contact__c == null){
                         oppsToUpdate.add(new Opportunity (
                             Id = opp.Id,
-                            Primary_Contact__c = match.Id              
+                            Primary_Contact__c = match.Id
                         ));
                     }
                 }                
@@ -66,15 +66,6 @@ public with sharing class OpportunityTriggerHelper {
             Database.update(oppsToUpdate, AccessLevel.USER_MODE);
         }    
     }
-        
-    public static void preventDeletionClosedOpp (List<Opportunity> oldOpps){
-        //moved simple logic out of handler
-        for (Opportunity oldOpp : oldOpps){
-            if (oldOpp.IsClosed){
-                oldOpp.addError('Cannot delete a closed opportunity');
-            }
-        }        
-    }
 
     public static void verifyClosedWonBankingOpps (List<Opportunity> existingOpps){
         Map<Id,Account> accountsWithOppsMap = new Map<Id,Account>([
@@ -84,15 +75,15 @@ public with sharing class OpportunityTriggerHelper {
                 SELECT AccountId
                 FROM Opportunity
                 WHERE Id IN :existingOpps)            
-            WITH USER_MODE
-        ]);
+            WITH USER_MODE]
+            );
         
         for (Opportunity existingOpp : existingOpps) { 
-            if (existingOpp.StageName == 'Closed Won') {
+            if (existingOpp.StageName == 'Closed Won'  || existingOpp.IsClosed) {
                 if(accountsWithOppsMap.containsKey(existingOpp.AccountId)){
-                String industry = accountsWithOppsMap.get(existingOpp.AccountId).Industry;
+                    String industry = accountsWithOppsMap.get(existingOpp.AccountId).Industry;
                     if (industry == 'Banking') {
-                        existingOpp.addError(CANNOT_DELETE_WON_BANKING_OPPS);
+                        existingOpp.addError(CANNOT_DELETE_CLOSED_OPPS);
                     }   
                 }
             }
@@ -133,7 +124,6 @@ public with sharing class OpportunityTriggerHelper {
         }
         //Query user emails
         Map<Id,String> ownerEmailMap = new Map<Id,String>();
-
         for (User usr : [SELECT Id, Email 
                         FROM User 
                         WHERE Id IN :ownerIds

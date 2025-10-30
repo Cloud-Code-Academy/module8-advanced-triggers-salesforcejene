@@ -17,12 +17,11 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
     }
 
     public override void beforeUpdate() {
-        OpportunityTriggerHelper.validateOppAmount(newOpps);
         OpportunityTriggerHelper.appendStageChangeToDescription(newOpps, oldOppsMap);
-    }
- 
+    } 
+
     public override void beforeDelete() {
-        
+        // OpportunityTriggerHelper.preventDeletionClosedOpp(oldOpps);
         OpportunityTriggerHelper.verifyClosedWonBankingOpps(oldOpps);
     }
 
@@ -64,9 +63,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler{
             return;
         }
         hasFired = true;
-        if (Trigger.isAfter && Trigger.isUndelete){
-            OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOppsMap.values(), 'VP Sales');
-        }
+        OpportunityTriggerHelper.addPrimaryContactToOpportunities(newOppsMap.values(), 'VP Sales');
         hasFired = false;
     }
 }
