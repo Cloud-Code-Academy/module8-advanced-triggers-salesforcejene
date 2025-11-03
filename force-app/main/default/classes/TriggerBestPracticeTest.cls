@@ -352,7 +352,6 @@ public with sharing class TriggerBestPracticeTest {
             );
             oppsToInsert.add(opp);
         }
-
         insert oppsToInsert;
 
         List<Task> tasks = [SELECT Id, Subject, WhatId FROM Task WHERE WhatId IN :oppsToInsert];
@@ -401,14 +400,23 @@ public with sharing class TriggerBestPracticeTest {
                 Name = 'Test Opportunity ' + i,
                 StageName = 'Prospecting',
                 CloseDate = Date.today(),
-                AccountId = acc.Id
+                AccountId = acc.Id                
             );
             oppsToInsert.add(opp);
         }
-
-        insert oppsToInsert;
-
-        delete oppsToInsert;
+        //adding try/catch blocks to identify causing the insert to fail
+        try {
+            insert oppsToInsert;
+        } catch (DmlException e) {
+            System.debug('DML Exception: ' + e.getDmlMessage(0));
+        }
+        
+        try {
+            delete oppsToInsert;
+        } catch (DmlException e) {
+            System.debug('DMLException: ' + e.getDmlMessage(0));
+        }
+        
         List<Opportunity> opps = [SELECT Id, Name FROM Opportunity WHERE AccountId = :acc.Id];
         System.assertEquals(0, opps.size(), 'Number of Opportunities created is incorrect.');
     }

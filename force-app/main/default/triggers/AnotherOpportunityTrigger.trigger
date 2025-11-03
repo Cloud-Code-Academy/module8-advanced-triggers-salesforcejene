@@ -39,6 +39,7 @@ trigger AnotherOpportunityTrigger on Opportunity (before insert, after insert, b
     if (Trigger.isAfter){
         if (Trigger.isInsert){
             // Create a new Task for newly inserted Opportunities
+            List<Task> taskToInsert = new List<Task>();
             for (Opportunity opp : Trigger.new){
                 Task tsk = new Task();
                 tsk.Subject = 'Call Primary Contact';
@@ -46,26 +47,31 @@ trigger AnotherOpportunityTrigger on Opportunity (before insert, after insert, b
                 tsk.WhoId = opp.Primary_Contact__c;
                 tsk.OwnerId = opp.OwnerId;
                 tsk.ActivityDate = Date.today().addDays(3);
-                insert tsk;
+                
+                taskToInsert.add(tsk); 
             }
-        } else if (Trigger.isUpdate){
+            Database.insert(taskToInsert, AccessLevel.USER_MODE);
+    //         // }
+        } else if (Trigger.isUpdate) {
             // Append Stage changes in Opportunity Description
-            for (Opportunity opp : Trigger.new){
-                for (Opportunity oldOpp : Trigger.old){
+            for (Opportunity opp : Trigger.new) {
+                for (Opportunity oldOpp : Trigger.old) {
                     if (opp.StageName != null){
                         opp.Description += '\n Stage Change:' + opp.StageName + ':' + DateTime.now().format();
                     }
                 }                
             }
             update Trigger.new;
+            System.debug('Execute');
         }
         // Send email notifications when an Opportunity is deleted 
         else if (Trigger.isDelete){
-            notifyOwnersOpportunityDeleted(Trigger.old);
+            System.debug('The event that triggered the AnotherOpportunityTrigger is.. :' + trigger.operationType);
         } 
         // Assign the primary contact to undeleted Opportunities
         else if (Trigger.isUndelete){
-            assignPrimaryContact(Trigger.newMap);
+            System.debug(LoggingLevel.INFO, 'Antr Opp Trigger::' + trigger.operationType);
+            System.debug('The event that triggered the AnotherOpportunityTrigger is.. :' + trigger.operationType);
         }
     }
 
