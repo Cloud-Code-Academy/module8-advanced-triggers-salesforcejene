@@ -4,7 +4,7 @@ public with sharing class OpportunityTriggerHelper {
         //moved simple logic out of handler
         for (Opportunity newOpp : newOpps) {
             if (newOpp.Amount < 5000) {
-                newOpp.addError(AMOUNT_TOO_LOW);
+                newOpp.addError(OpportunityTriggerException.AMOUNT_TOO_LOW);
             }
         }
     }
@@ -83,7 +83,7 @@ public with sharing class OpportunityTriggerHelper {
                 if(accountsWithOppsMap.containsKey(existingOpp.AccountId)){
                     String industry = accountsWithOppsMap.get(existingOpp.AccountId).Industry;
                     if (industry == 'Banking') {
-                        existingOpp.addError(CANNOT_DELETE_CLOSED_OPPS);
+                        existingOpp.addError(OpportunityTriggerException.CANNOT_DELETE_CLOSED_OPPS);
                     }   
                 }
             }
@@ -134,7 +134,7 @@ public with sharing class OpportunityTriggerHelper {
             }
         }
 
-        //group deleted opp names by owner
+        //group opp names by OwnerId
         Map<Id, List<String>> ownerToOppNames = new Map<Id, List<String>>();
         for (Opportunity opp : deletedOpps){
             /*if this is the first pass for this oppOwner,
@@ -147,21 +147,22 @@ public with sharing class OpportunityTriggerHelper {
             ownerToOppNames.get(opp.OwnerId).add(opp.Name);
         }
 
-        //generate email per owner by storing the owner's email
+        //build & send email per owner by storing the owner's email
         for (Id ownerId : ownerToOppNames.keySet()){
-            String email = ownerEmailMap.get(ownerId);
-            If (email == null) {
+            String email = ownerEmailMap.get(ownerId);            
+            if (email == null) {
                 continue;
             }
-        }
-        //build message contents outside of loop to prevent LimitException
-        String body = 'The following opportunities were deleted: \n' + String.join(ownerToOppNames.get(ownerId), email);
+            String body = 'The following opportunities were deleted: \n' + 
+                            String.join(ownerToOppNames.get(ownerId), '\n');
 
-        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-        mail.setToAddresses(new String[] {email});
-        mail.setSubject('Deleted Opportunities Alert!');
-        mail.setPlainTextBody(body);
-        mails.add(mail);
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            mail.setToAddresses(new String[] {email});
+            mail.setSubject('Deleted Opportunities Alert!');
+            mail.setPlainTextBody(body);
+            mails.add(mail);
+        }
+        
         //send emails----
         try {
             if(!mails.isEmpty()){
